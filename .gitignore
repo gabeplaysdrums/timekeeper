@@ -4,3 +4,6 @@
 
 # development database
 dev.db
+
+# static files
+static/

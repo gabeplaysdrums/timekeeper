@@ -3,7 +3,10 @@
 *~
 
 # development database
-dev.db
+/dev.db
 
 # static files
-static/
+/static/
+
+# user media
+/media/

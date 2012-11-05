@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block head %}
+<style type="text/css">
+  td.label { font-weight: bold; }
+</style>
+{% endblock %}
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  <table>
+    <tr>
+      <td class="label">Tempo:</td>
+      <td>{{ form.tempo }} bpm</td>
+    </tr>
+    <tr>
+      <td class="label">Time Signature:</td>
+      <td>{{ form.timesig_numer }} / {{ form.timesig_denom }}</td>
+    </tr>
+    <tr>
+      <td class="label">Duration:</td>
+      <td>{{ form.duration }} minutes</td>
+    </tr>
+  </table>
+  <p><input type="submit" value="Create" /></p>
+</form>
+{% endblock %}

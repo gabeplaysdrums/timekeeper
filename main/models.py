@@ -36,7 +36,6 @@ class Timekeeper(ModelBase):
     midi.start_of_track() 
     
     # musical events
-    
     midi.update_time(0)
     midi.note_on(channel=0, note=0x40)
     

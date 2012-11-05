@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from main.forms import *
@@ -26,7 +26,10 @@ def index(request):
         )
         t.generate_midi_file()
         t.save()
-      return HttpResponseRedirect(t.midi_file.url)
+      response = HttpResponse(t.midi_file, content_type='application/force-download')
+      response['Content-Disposition'] = 'attachment; filename=%s' % t.midi_file.name
+      response['Content-Length'] = t.midi_file.size
+      return response
   else:
     form = TimekeeperForm()
   return render_to_response(

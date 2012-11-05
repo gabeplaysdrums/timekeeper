@@ -7,6 +7,8 @@ urlpatterns = patterns('',
     # Example:
     # (r'^timekeeper/', include('timekeeper.foo.urls')),
 
+    (r'^', include('main.urls')),
+
     # Uncomment the admin/doc line below to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 

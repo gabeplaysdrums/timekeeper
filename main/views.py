@@ -15,6 +15,7 @@ def index(request):
           timesig_numer=form.cleaned_data['timesig_numer'],
           timesig_denom=form.cleaned_data['timesig_denom'],
           tempo=form.cleaned_data['tempo'],
+          feel=form.cleaned_data['feel'],
           duration=form.cleaned_data['duration'],
         )
       except Timekeeper.DoesNotExist:
@@ -22,6 +23,7 @@ def index(request):
           timesig_numer=form.cleaned_data['timesig_numer'],
           timesig_denom=form.cleaned_data['timesig_denom'],
           tempo=form.cleaned_data['tempo'],
+          feel=form.cleaned_data['feel'],
           duration=form.cleaned_data['duration'],
         )
       if not t.midi_file:

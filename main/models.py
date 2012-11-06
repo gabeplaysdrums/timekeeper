@@ -50,6 +50,9 @@ class Timekeeper(ModelBase):
     # parts per quarter-note
     PPQ = 96
 
+    # measures before changing the pattern
+    MEASURES_PER_SECTION = 8
+
     # parts per down-beat
     ppd = int(PPQ * 4.0 / self.timesig_denom)
 
@@ -108,6 +111,62 @@ class Timekeeper(ModelBase):
     helper = __Helper(self.feel, ppd)
     del __Helper
 
+    # Create sections
+    #
+    section_list = []
+
+    class Section:
+      def __init__(self):
+        self.measures = 0
+      def write(self):
+        pass
+
+    class FullSection(Section):
+      def __init__(self, timesig_numer):
+        self.measures = 1
+        self.timesig_numer = timesig_numer
+      def write(self):
+        for i in range(self.timesig_numer):
+          if i == 0:
+            helper.write_accent()
+          else:
+            helper.write_downbeat()
+          helper.write_feelbeats()
+
+    section_list.append(FullSection(self.timesig_numer))
+
+    class DownbeatSection(Section):
+      def __init__(self, timesig_numer, downbeat_count):
+        self.measures = 1
+        self.timesig_numer = timesig_numer
+        self.downbeat_count = downbeat_count
+      def write(self):
+        for i in range(self.timesig_numer):
+          if i == 0:
+            helper.write_accent()
+          else:
+            helper.write_downbeat()
+          if i < self.downbeat_count:
+            helper.write_feelbeats()
+
+    for i in reversed(range(self.timesig_numer)):
+      section_list.append(DownbeatSection(self.timesig_numer, i))
+
+    class AccentSection(Section):
+      def __init__(self, timesig_numer, downbeat_count):
+        self.measures = 1
+        self.timesig_numer = timesig_numer
+        self.downbeat_count = downbeat_count
+      def write(self):
+        for i in range(self.timesig_numer):
+          if i == 0:
+            helper.write_accent()
+          else:
+            helper.write_downbeat(rest=(i >= self.downbeat_count))
+
+    for i in reversed(range(1, self.timesig_numer)):
+      section_list.append(AccentSection(self.timesig_numer, i))
+
     # non optional midi framework
     midi.header(format=0, nTracks=1, division=PPQ)
     midi.start_of_track() 
@@ -125,15 +184,14 @@ class Timekeeper(ModelBase):
 
     minutes_per_measure = self.timesig_numer / self.tempo
     total_minutes = 0
+    section_count = 0
 
     while total_minutes < self.duration:
-      for i in range(self.timesig_numer):
-        if i == 0:
-          helper.write_accent()
-        else:
-          helper.write_downbeat()
-        helper.write_feelbeats()
-      total_minutes += minutes_per_measure
+      section = section_list[section_count % len(section_list)]
+      for i in range(0, MEASURES_PER_SECTION, section.measures):
+        section.write()
+        total_minutes += minutes_per_measure
+      section_count += 1
 
     # non optional midi framework
     midi.update_time(0)

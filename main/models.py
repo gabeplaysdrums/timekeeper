@@ -11,11 +11,13 @@ class ModelBase(models.Model):
   class Meta:
     abstract = True
 
+FEEL_NONE = '-'
 FEEL_STRAIGHT = 'S'
 FEEL_TRIPLET = 'T'
 FEEL_SWING = 'W'
 
 FEEL_CHOICES = (
+  (FEEL_NONE, 'none'),
   (FEEL_STRAIGHT, 'straight'),
   (FEEL_TRIPLET, 'triplet'),
   (FEEL_SWING, 'swing'),
@@ -50,42 +52,66 @@ class Timekeeper(ModelBase):
 
     # parts per down-beat
     ppd = int(PPQ * 4.0 / self.timesig_denom)
-    
+
+    class __Helper:
+      def __init__(self, feel, ppd):
+        self.feel = feel
+        self.ppd = ppd
+        self.default_dur = self.ppd
+        if self.feel == FEEL_STRAIGHT:
+          self.default_dur = self.ppd / 2
+        elif self.feel == FEEL_TRIPLET:
+          self.default_dur = self.ppd / 3
+        elif self.feel == FEEL_SWING:
+          self.default_dur = self.ppd / 3
+        self.last_note = 0
+        self.dur_remaining = 0
+      def write_note(self, note, dur=None, rest=False):
+        if rest:
+          self.write_rest(dur)
+          return
+        if dur == None:
+          dur = self.default_dur
+        dur = max(0, dur)
+        midi.note_on(channel=1, note=note)
+        midi.update_time(dur)
+        self.last_note = note
+        self.dur_remaining -= dur
+      def write_rest(self, dur=None):
+        if dur == None:
+          dur = self.default_dur
+        dur = max(0, dur)
+        midi.note_off(channel=1, note=self.last_note)
+        midi.update_time(dur)
+        self.dur_remaining -= dur
+      def reset_downbeat(self):
+        self.write_rest(self.dur_remaining)
+        self.dur_remaining = self.ppd
+      def write_accent(self, dur=None, rest=False):
+        self.reset_downbeat()
+        self.write_note(0x48, dur, rest)
+      def write_downbeat(self, dur=None, rest=False):
+        self.reset_downbeat()
+        self.write_note(0x44, dur, rest)
+      def write_upbeat(self, dur=None, rest=False):
+        self.write_note(0x40, dur, rest)
+      def write_feelbeats(self):
+        if self.feel == FEEL_STRAIGHT:
+          self.write_upbeat(self.dur_remaining)
+        elif self.feel == FEEL_TRIPLET:
+          self.write_upbeat()
+          self.write_upbeat(self.dur_remaining)
+        elif self.feel == FEEL_SWING:
+          helper.write_rest()
+          self.write_upbeat(self.dur_remaining)
+
+    helper = __Helper(self.feel, ppd)
+    del __Helper
+
     # non optional midi framework
     midi.header(format=0, nTracks=1, division=PPQ)
     midi.start_of_track() 
     midi.update_time(0)
-
-    NOTE_ACCENT = 'a'
-    NOTE_DOWNBEAT = 'd'
-    NOTE_UPBEAT = 'u'
-    NOTE_REST = '-'
-
-    note_list = []
-
-    for i in range(self.timesig_numer):
-      downbeat = NOTE_DOWNBEAT
-      if i == 0:
-        downbeat = NOTE_ACCENT
-      if self.feel == FEEL_STRAIGHT:
-        note_list.append(downbeat)
-        note_list.append(NOTE_UPBEAT)
-      elif self.feel == FEEL_TRIPLET:
-        note_list.append(downbeat)
-        note_list.append(NOTE_UPBEAT)
-        note_list.append(NOTE_UPBEAT)
-      elif self.feel == FEEL_SWING:
-        note_list.append(downbeat)
-        note_list.append(NOTE_REST)
-        note_list.append(NOTE_UPBEAT)
-
-    note_step = None
-    if self.feel == FEEL_STRAIGHT:
-      note_step = ppd / 2
-    elif self.feel == FEEL_TRIPLET:
-      note_step = ppd / 3
-    elif self.feel == FEEL_SWING:
-      note_step = ppd / 3
 
     # non-musical events
     #
@@ -99,22 +125,14 @@ class Timekeeper(ModelBase):
 
     minutes_per_measure = self.timesig_numer / self.tempo
     total_minutes = 0
-    last_note = None
 
     while total_minutes < self.duration:
-      for n in note_list:
-        if n == NOTE_REST:
-          midi.note_off(channel=1, note=last_note)
-        elif n == NOTE_ACCENT:
-          midi.note_on(channel=1, note=0x48)
-          last_note = 0x48
-        elif n == NOTE_DOWNBEAT:
-          midi.note_on(channel=1, note=0x44)
-          last_note = 0x44
+      for i in range(self.timesig_numer):
+        if i == 0:
+          helper.write_accent()
         else:
-          midi.note_on(channel=1, note=0x40)
-          last_note = 0x40
-        midi.update_time(note_step)
+          helper.write_downbeat()
+        helper.write_feelbeats()
       total_minutes += minutes_per_measure
 
     # non optional midi framework

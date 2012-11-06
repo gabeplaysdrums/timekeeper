@@ -182,7 +182,7 @@ class Timekeeper(ModelBase):
     # musical events
     #
 
-    minutes_per_measure = self.timesig_numer / self.tempo
+    minutes_per_measure = self.timesig_numer / float(self.tempo) * 4.0 / self.timesig_denom
     total_minutes = 0
     section_count = 0
 

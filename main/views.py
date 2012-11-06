@@ -24,8 +24,10 @@ def index(request):
           tempo=form.cleaned_data['tempo'],
           duration=form.cleaned_data['duration'],
         )
+      if not t.midi_file:
         t.generate_midi_file()
-        t.save()
+      t.request_count += 1
+      t.save()
       response = HttpResponse(t.midi_file, content_type='application/force-download')
       response['Content-Disposition'] = 'attachment; filename=%s' % t.midi_file.name
       response['Content-Length'] = t.midi_file.size

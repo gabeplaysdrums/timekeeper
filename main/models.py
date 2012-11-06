@@ -15,6 +15,7 @@ class Timekeeper(ModelBase):
   timesig_numer = models.IntegerField()
   timesig_denom = models.IntegerField()
   duration = models.IntegerField()
+  request_count = models.PositiveIntegerField(default=0)
 
   def compute_file_path(instance, filename):
     return 'timekeeper_%d-%d_%.1f_bpm_%d_minutes.mid' % (

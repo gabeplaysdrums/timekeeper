@@ -92,12 +92,12 @@ class Timekeeper(ModelBase):
         self.dur_remaining = self.ppd
       def write_accent(self, dur=None, rest=False):
         self.reset_downbeat()
-        self.write_note(0x48, dur, rest)
+        self.write_note(0x50, dur, rest)
       def write_downbeat(self, dur=None, rest=False):
         self.reset_downbeat()
-        self.write_note(0x44, dur, rest)
+        self.write_note(0x4C, dur, rest)
       def write_upbeat(self, dur=None, rest=False):
-        self.write_note(0x40, dur, rest)
+        self.write_note(0x4A, dur, rest)
       def write_feelbeats(self):
         if self.feel == FEEL_STRAIGHT:
           self.write_upbeat(self.dur_remaining)
@@ -170,6 +170,9 @@ class Timekeeper(ModelBase):
     # non optional midi framework
     midi.header(format=0, nTracks=1, division=PPQ)
     midi.start_of_track() 
+    midi.sequence_name('Percussion')
+    midi.instrument_name('Percussion')
+    midi.patch_change(channel=1, patch=115)
     midi.update_time(0)
 
     # non-musical events

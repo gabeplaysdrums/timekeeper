@@ -29,15 +29,17 @@ class Timekeeper(ModelBase):
   timesig_denom = models.IntegerField()
   duration = models.IntegerField()
   feel = models.CharField(max_length=1, default=FEEL_STRAIGHT, choices=FEEL_CHOICES)
+  measures_per_phrase = models.IntegerField()
   request_count = models.PositiveIntegerField(default=0)
 
   def compute_file_path(instance, filename):
-    return 'timekeeper_%d-%d_%s_%.1f_bpm_%d_minutes.mid' % (
+    return 'timekeeper_%d-%d_%s_%.1f_bpm_%d_minutes_%d-measure_phrases.mid' % (
       instance.timesig_numer,
       instance.timesig_denom,
       instance.get_feel_display(),
       instance.tempo,
       instance.duration,
+      instance.measures_per_phrase,
     )
 
   midi_file = models.FileField(upload_to=compute_file_path)
@@ -49,9 +51,6 @@ class Timekeeper(ModelBase):
 
     # parts per quarter-note
     PPQ = 96
-
-    # measures before changing the pattern
-    MEASURES_PER_SECTION = 8
 
     # parts per down-beat
     ppd = int(PPQ * 4.0 / self.timesig_denom)
@@ -191,7 +190,7 @@ class Timekeeper(ModelBase):
 
     while total_minutes < self.duration:
       section = section_list[section_count % len(section_list)]
-      for i in range(0, MEASURES_PER_SECTION, section.measures):
+      for i in range(0, self.measures_per_phrase, section.measures):
         section.write()
         total_minutes += minutes_per_measure
       section_count += 1

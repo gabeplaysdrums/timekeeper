@@ -17,6 +17,7 @@ def index(request):
           tempo=form.cleaned_data['tempo'],
           feel=form.cleaned_data['feel'],
           duration=form.cleaned_data['duration'],
+          measures_per_phrase=form.cleaned_data['measures_per_phrase'],
         )
       except Timekeeper.DoesNotExist:
         t = Timekeeper.objects.create(
@@ -25,6 +26,7 @@ def index(request):
           tempo=form.cleaned_data['tempo'],
           feel=form.cleaned_data['feel'],
           duration=form.cleaned_data['duration'],
+          measures_per_phrase=form.cleaned_data['measures_per_phrase'],
         )
       if not t.midi_file:
         t.generate_midi_file()

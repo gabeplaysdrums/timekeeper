@@ -13,3 +13,5 @@ DATABASES = {
         'PORT': '',
     }
 }
+
+STATIC_URL = '/timekeeper/static/'
